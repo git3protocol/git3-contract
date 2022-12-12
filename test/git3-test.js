@@ -66,21 +66,21 @@ describe("Git3 Test", function () {
     expect(await git3.countChunks("0x616263")).to.eql(ToBig(0));
   });
 
-  it("set/list Ref",async function() {
+  it("set/update/list/remove Reference",async function() {
     const Git3 = await ethers.getContractFactory("Git3");
     const git3 = await Git3.deploy();
     await git3.deployed();
 
     let key0 = "0x616263";
-    let data0 = "0xaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabb";
+    let data0 = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     await git3.setRef(key0,data0);
 
     let key1 = "0x717273";
-    let data1 = "0x1111aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaaaaaaaaaaaa";
+    let data1 = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     await git3.setRef(key1,data1);
 
     let key2 = "0x818283";
-    let data2 = "0x777777777777777baabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabba88888888888";
+    let data2 = "0xcccccccccccccccccccccccccccccccccccccccc";
     await git3.setRef(key2,data2);
 
 
@@ -101,6 +101,12 @@ describe("Git3 Test", function () {
     refs = await git3.listRefs();
     expect(refs[0]).to.eql([data2,key2]);
     expect(refs.length).to.eql(1);
+
+    // check update
+    let data3 = "0xdddddddddddddddddddddddddddddddddddddddd";
+    await git3.setRef(key2,data3);
+    refs = await git3.listRefs();
+    expect(refs[0]).to.eql([data3,key2]);
 
   })
 
