@@ -111,12 +111,10 @@ contract Git3 {
     srs = nameToRefInfo[name];
 
     if (srs.hash1 == bytes32(0) && srs.hash2 == bytes8(0)) {
-      // first store refHash
+      // store refHash for the first time
       require(refs.length <= uint256(uint192(int192(-1))),"refs exceed valid length");
 
-
       _setRefInfo(nameToRefInfo[name],refHash,uint192(refs.length));
-      console.log("refs_length:",refs.length);
       refs.push(name);
     }else{
       // only update refHash 
@@ -126,14 +124,19 @@ contract Git3 {
 
   // delRef(path: string): Promise<Status>
   function delRef(string memory name) public {
+    // only execute `sload` once to reduce gas consumption
     refInfo memory srs;
     srs = nameToRefInfo[name];
+    uint256 refsLen = refs.length;
 
     require(srs.hash1 != bytes32(0) || srs.hash2 != bytes8(0),"Reference of this name does not exist");
 
-    refs[srs.index] = refs[refs.length - 1];
-    nameToRefInfo[refs[refs.length - 1]].index = srs.index;
-    delete refs[refs.length - 1];
+    require(srs.index < refsLen,"System Error: Invalid index");
+    if (srs.index < refsLen-1){
+      refs[srs.index] = refs[refsLen - 1];
+      nameToRefInfo[refs[refsLen - 1]].index = srs.index;
+    }
+    refs.pop();
     delete nameToRefInfo[name];
   }
 }

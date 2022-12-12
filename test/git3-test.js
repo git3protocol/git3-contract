@@ -88,12 +88,19 @@ describe("Git3 Test", function () {
     expect(refs[0]).to.eql([data0,key0]);
     expect(refs[1]).to.eql([data1,key1]);
     expect(refs[2]).to.eql([data2,key2]);
+    expect(refs.length).to.eql(3);
 
     // check delRef 
     await git3.delRef(key0);
     refs = await git3.listRefs();
     expect(refs[0]).to.eql([data2,key2]);
     expect(refs[1]).to.eql([data1,key1]);
+    expect(refs.length).to.eql(2);
+
+    await git3.delRef(key1);
+    refs = await git3.listRefs();
+    expect(refs[0]).to.eql([data2,key2]);
+    expect(refs.length).to.eql(1);
 
   })
 
