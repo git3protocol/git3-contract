@@ -1,0 +1,27 @@
+{
+  "name": "dgithub",
+  "version": "1.0.0",
+  "description": "Dencentralized Github",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cyl19970726/dGithub.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cyl19970726/dGithub/issues"
+  },
+  "homepage": "https://github.com/cyl19970726/dGithub#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "hardhat": "^2.12.4"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.0",
+    "evm-large-storage": "^1.0.0"
+  }
+}
