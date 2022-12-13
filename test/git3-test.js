@@ -13,7 +13,8 @@ describe("Git3 Test", function () {
 
     let singer;
     [singer] = await ethers.getSigners();
-    console.log("singer", singer.address);
+
+    await git3.createRepo("0x11");
 
     await git3.upload("0x11", "0x616263", "0x112233");
     expect(await git3.download("0x11", "0x616263")).to.eql(["0x112233", true]);
@@ -38,6 +39,8 @@ describe("Git3 Test", function () {
     const Git3 = await ethers.getContractFactory("Git3");
     const git3 = await Git3.deploy();
     await git3.deployed();
+
+    await git3.createRepo("0x11");
 
     expect(await git3.countChunks("0x11", "0x616263")).to.eql(ToBig(0));
 
@@ -71,6 +74,8 @@ describe("Git3 Test", function () {
     await git3.deployed();
 
     let repoName = "0x11";
+    await git3.createRepo(repoName);
+
     function concatHexStr(s1, s2) {
       return s1.concat("2f").concat(s2.slice(2));
     }
@@ -87,7 +92,7 @@ describe("Git3 Test", function () {
     let data2 = "0xcccccccccccccccccccccccccccccccccccccccc";
     await git3.setRef(repoName, key2, data2);
 
-    let refs = await git3.listRefs();
+    let refs = await git3.listRefs(repoName);
     expect(refs[0]).to.eql([data0, concatHexStr(repoName, key0)]);
     expect(refs[1]).to.eql([data1, concatHexStr(repoName, key1)]);
     expect(refs[2]).to.eql([data2, concatHexStr(repoName, key2)]);
@@ -95,20 +100,43 @@ describe("Git3 Test", function () {
 
     // check delRef
     await git3.delRef(repoName, key0);
-    refs = await git3.listRefs();
+    refs = await git3.listRefs(repoName);
     expect(refs[0]).to.eql([data2, concatHexStr(repoName, key2)]);
     expect(refs[1]).to.eql([data1, concatHexStr(repoName, key1)]);
     expect(refs.length).to.eql(2);
 
     await git3.delRef(repoName, key1);
-    refs = await git3.listRefs();
+    refs = await git3.listRefs(repoName);
     expect(refs[0]).to.eql([data2, concatHexStr(repoName, key2)]);
     expect(refs.length).to.eql(1);
 
     // check update
     let data3 = "0xdddddddddddddddddddddddddddddddddddddddd";
     await git3.setRef(repoName, key2, data3);
-    refs = await git3.listRefs();
+    refs = await git3.listRefs(repoName);
     expect(refs[0]).to.eql([data3, concatHexStr(repoName, key2)]);
+  });
+
+  it("Access Control", async function () {
+    const Git3 = await ethers.getContractFactory("Git3");
+    const git3 = await Git3.deploy();
+    await git3.deployed();
+
+    let singer;
+    let user1;
+    [singer,user1,] = await ethers.getSigners();
+
+    await git3.connect(singer).createRepo("0x11");
+
+    await expect(git3.connect(user1).upload("0x11", "0x616263", "0x112233")).to.be.revertedWith("only owner");
+    await expect(git3.connect(user1).uploadChunk("0x11", "0x616263", 0,"0x112233")).to.be.revertedWith("only owner");
+    await expect(git3.connect(user1).setRef("0x11", "0x616263", "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")).to.be.revertedWith("only owner");
+
+    await git3.connect(singer).upload("0x11", "0x616263", "0x112233")
+    expect(await git3.download("0x11", "0x616263")).to.eql(["0x112233", true]);
+    await git3.connect(singer).setRef("0x11", "0x616263", "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    
+    await expect(git3.connect(user1).remove("0x11", "0x616263")).to.be.revertedWith("only owner");
+    await expect(git3.connect(user1).delRef("0x11", "0x616263")).to.be.revertedWith("only owner");
   });
 });
