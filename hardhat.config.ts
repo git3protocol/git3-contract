@@ -1,5 +1,3 @@
-
-
 require("dotenv").config();
 
 import { HardhatUserConfig } from "hardhat/config";
@@ -11,8 +9,8 @@ const config: HardhatUserConfig = {
     w3qGalileo: {
       url: "https://galileo.web3q.io:8545",
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    }
-  }
+    },
+  },
 };
 
 export default config;

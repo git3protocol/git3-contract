@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "./IFileOperator.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "evm-large-storage/contracts/examples/FlatDirectory.sol";
+import "git3-evm-large-storage/contracts/LargeStorageManager.sol";
 // import "evm-large-storage/contracts/W3RC3.sol";
 
-contract Git3 {
-  IFileOperator public immutable storageManager;
+contract Git3 is LargeStorageManager {
+
   struct refInfo {
     bytes20 hash;
     uint96 index; 
@@ -27,34 +27,32 @@ contract Git3 {
     res.name = refs[info.index];
   }
 
-  constructor() {
-    storageManager = IFileOperator(address(new FlatDirectory(0)));
+  constructor() LargeStorageManager(0) {
   }
 
   function download(bytes memory path) external view returns (bytes memory, bool) {
-    // call flat directory(FD)
-    return storageManager.read(path);
+    return _get(keccak256(path));
   }
 
-  function upload(bytes memory path, bytes memory data) external payable {
-    storageManager.writeChunk(path, 0, data);
+  function upload(bytes memory path, bytes calldata data) external payable {
+    _putChunkFromCalldata(keccak256(path), 0, data,msg.value);
   }
 
-  function uploadChunk(bytes memory path,uint256 chunkId,  bytes memory data) external payable {
-    storageManager.writeChunk(path, chunkId, data);
+  function uploadChunk(bytes memory path,uint256 chunkId,  bytes calldata data) external payable {
+    _putChunkFromCalldata(keccak256(path), chunkId, data,msg.value);
   }
 
   function remove(bytes memory path) external {
     // The actually process of remove will remove all the chunks
-    storageManager.remove(path);
+    _remove(keccak256(path),0);
   }
 
   function size(bytes memory name) external view returns (uint256,uint256){
-    return storageManager.size(name);
+    return _size(keccak256(name));
   }
 
-  function countChunks(bytes memory name)external view returns (uint256){
-    return storageManager.countChunks(name);
+  function countChunks(bytes memory path)external view returns (uint256){
+    return _countChunks(keccak256(path));
   }
 
   function listRefs() public view returns (refData[] memory list) {
@@ -91,7 +89,7 @@ contract Git3 {
     srs = nameToRefInfo[name];
     uint256 refsLen = refs.length;
 
-    require(srs.hash != bytes20(0),"Reference of this name does not exist");
+    require(srs.hash != bytes20(0),"The name of reference does not exist");
     require(srs.index < refsLen,"System Error: Invalid index");
 
     if (srs.index < refsLen-1){

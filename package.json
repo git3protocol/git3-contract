@@ -19,10 +19,12 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",
     "dotenv": "^16.0.3",
-    "hardhat": "^2.12.4"
+    "hardhat": "^2.12.4",
+    "prettier": "2.8.1"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.8.0",
-    "evm-large-storage": "^1.0.0"
+    "evm-large-storage": "^1.0.0",
+    "git3-evm-large-storage": "^1.0.0"
   }
 }
