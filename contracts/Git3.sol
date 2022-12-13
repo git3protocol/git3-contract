@@ -35,8 +35,8 @@ contract Git3 {
         storageManager = IFileOperator(address(new FlatDirectory(220)));
     }
 
-    modifier onlyOwner(bytes memory repoName, address memory user) {
-        require(repoNameToOwner[repoName] == user || repoNameToOwner[repoName] == address(0));
+    modifier onlyOwner(bytes memory repoName) {
+        require(repoNameToOwner[repoName] == msg.sender);
         _;
     }
 
@@ -48,8 +48,15 @@ contract Git3 {
         return storageManager.read(bytes.concat(repoName, '/', path));
     }
 
+    function createRepo(bytes memory repoName)
+        external payable
+    {
+        require(repoNameToOwner[repoName] == address(0));
+        repoNameToOwner[repoName] = msg.sender;
+    }
+
     function upload(bytes memory repoName, bytes memory path, bytes memory data)
-        external payable onlyOwner(repoName, msg.sender)
+        external payable onlyOwner(repoName)
     {
         storageManager.writeChunk{value: msg.value}(bytes.concat(repoName, '/', path), 0, data);
     }
@@ -59,22 +66,22 @@ contract Git3 {
         bytes memory path,
         uint256 chunkId,
         bytes memory data
-    ) external payable onlyOwner(repoName, msg.sender) {
+    ) external payable onlyOwner(repoName) {
         storageManager.writeChunk{value: msg.value}(bytes.concat(repoName, '/', path), chunkId, data);
     }
 
-    function remove(bytes memory repoName, bytes memory path) external onlyOwner(repoName, msg.sender) {
+    function remove(bytes memory repoName, bytes memory path) external onlyOwner(repoName) {
 
         // The actually process of remove will remove all the chunks
         storageManager.remove(bytes.concat(repoName, '/', path));
     }
 
-    function size(bytes memory name) external view returns (uint256, uint256) {
-        return storageManager.size(name);
+    function size(string memory name) external view returns (uint256, uint256) {
+        return storageManager.size(bytes(name));
     }
 
-    function countChunks(bytes memory name) external view returns (uint256) {
-        return storageManager.countChunks(name);
+    function countChunks(string memory name) external view returns (uint256) {
+        return storageManager.countChunks(bytes(name));
     }
 
     function listRefs() public view returns (refData[] memory list) {
@@ -84,7 +91,7 @@ contract Git3 {
         }
     }
 
-    function setRef(bytes memory repoName, bytes memory name, bytes20 refHash) public onlyOwner(repoName, msg.sender) {
+    function setRef(bytes memory repoName, string memory name, bytes20 refHash) public onlyOwner(repoName) {
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
         srs = nameToRefInfo[name];
@@ -97,7 +104,6 @@ contract Git3 {
                 "Refs exceed valid length"
             );
 
-            repoToOwner
             nameToRefInfo[name].hash = refHash;
             nameToRefInfo[name].index = uint96(refsLen);
 
@@ -108,7 +114,7 @@ contract Git3 {
         }
     }
 
-    function delRef(bytes memory repoName, bytes memory name) public onlyOwner(repoName, msg.sender) {
+    function delRef(bytes memory repoName, string memory name) public onlyOwner(repoName) {
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
         srs = nameToRefInfo[name];
