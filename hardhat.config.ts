@@ -2,7 +2,7 @@ require("dotenv").config();
 
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
-import { NetworkDefinition, EtherscanConfig } from './local.config';
+import { NetworkDefinition, EtherscanConfig } from "./local.config";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -12,18 +12,19 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 1000
-          }
-        }
-      }
+            runs: 1000,
+          },
+        },
+      },
     ],
   },
   networks: {
     w3qGalileo: {
       url: "https://galileo.web3q.io:8545",
-      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
-    ...NetworkDefinition
+    ...NetworkDefinition,
   },
   etherscan: EtherscanConfig,
 };

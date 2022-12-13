@@ -1,7 +1,7 @@
 # Contract Info
 
 - RPC : https://galileo.web3q.io:8545
-- ChainId : 3334 
+- ChainId : 3334
 - Git3 Contract Address: 0x680336910D9357F6aDf26c0d61eAB8e65998Ab2d
 
 # Sample Hardhat Project
