@@ -9,6 +9,7 @@ import "git3-evm-large-storage/contracts/LargeStorageManager.sol";
 // import "evm-large-storage/contracts/W3RC3.sol";
 
 contract Git3 is LargeStorageManager {
+
     struct refInfo {
         bytes20 hash;
         uint96 index;
@@ -19,6 +20,7 @@ contract Git3 is LargeStorageManager {
         string name;
     }
 
+    mapping(bytes => address) public repoNameToOwner;
     mapping(string => refInfo) public nameToRefInfo; // dev => {hash: 0x1234..., index: 1 }
     string[] public refs; // [main, dev, test, staging]
 
@@ -31,35 +33,52 @@ contract Git3 is LargeStorageManager {
 
     constructor() LargeStorageManager(0) {}
 
-    function download(
-        bytes memory path
-    ) external view returns (bytes memory, bool) {
-        return _get(keccak256(path));
+    modifier onlyOwner(bytes memory repoName) {
+        require(repoNameToOwner[repoName] == msg.sender);
+        _;
     }
 
-    function upload(bytes memory path, bytes calldata data) external payable {
-        _putChunkFromCalldata(keccak256(path), 0, data, msg.value);
+    function download(
+        bytes memory repoName,
+        bytes memory path
+    ) external view returns (bytes memory, bool) {
+        // call flat directory(FD)
+        return _get(keccak256(bytes.concat(repoName, '/', path)));
+    }
+
+    function createRepo(bytes memory repoName)
+        external payable
+    {
+        require(repoNameToOwner[repoName] == address(0));
+        repoNameToOwner[repoName] = msg.sender;
+    }
+
+    function upload(bytes memory repoName, bytes memory path, bytes calldata data)
+        external payable onlyOwner(repoName)
+    {
+        _putChunkFromCalldata(keccak256(bytes.concat(repoName, '/', path)), 0, data,msg.value);
     }
 
     function uploadChunk(
+        bytes memory repoName,
         bytes memory path,
         uint256 chunkId,
         bytes calldata data
-    ) external payable {
-        _putChunkFromCalldata(keccak256(path), chunkId, data, msg.value);
+    ) external payable onlyOwner(repoName) {
+        _putChunkFromCalldata(keccak256(bytes.concat(repoName, '/', path)), chunkId, data,msg.value);
     }
 
-    function remove(bytes memory path) external {
+    function remove(bytes memory repoName, bytes memory path) external onlyOwner(repoName) {
         // The actually process of remove will remove all the chunks
-        _remove(keccak256(path), 0);
+        _remove(keccak256(bytes.concat(repoName, '/', path)),0);
     }
 
     function size(bytes memory name) external view returns (uint256, uint256) {
         return _size(keccak256(name));
     }
 
-    function countChunks(bytes memory path) external view returns (uint256) {
-        return _countChunks(keccak256(path));
+    function countChunks(bytes memory name) external view returns (uint256) {
+        return _countChunks(keccak256(name));
     }
 
     function listRefs() public view returns (refData[] memory list) {
@@ -69,7 +88,8 @@ contract Git3 is LargeStorageManager {
         }
     }
 
-    function setRef(string memory name, bytes20 refHash) public {
+
+    function setRef(bytes memory repoName, string memory name, bytes20 refHash) public onlyOwner(repoName) {
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
         srs = nameToRefInfo[name];
@@ -92,13 +112,17 @@ contract Git3 is LargeStorageManager {
         }
     }
 
-    function delRef(string memory name) public {
+    function delRef(bytes memory repoName, string memory name) public onlyOwner(repoName) {
+
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
         srs = nameToRefInfo[name];
         uint256 refsLen = refs.length;
 
-        require(srs.hash != bytes20(0), "The name of reference does not exist");
+        require(
+            srs.hash != bytes20(0),
+            "Reference of this name does not exist"
+        );
         require(srs.index < refsLen, "System Error: Invalid index");
 
         if (srs.index < refsLen - 1) {
@@ -109,3 +133,4 @@ contract Git3 is LargeStorageManager {
         delete nameToRefInfo[name];
     }
 }
+
