@@ -4,12 +4,11 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "./IFileOperator.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "evm-large-storage/contracts/examples/FlatDirectory.sol";
+import "evm-large-storage/contracts/LargeStorageManager.sol";
 
 // import "evm-large-storage/contracts/W3RC3.sol";
 
-contract Git3 {
-    IFileOperator public immutable storageManager;
+contract Git3 is LargeStorageManager {
     struct refInfo {
         bytes20 hash;
         uint96 index;
@@ -17,26 +16,25 @@ contract Git3 {
 
     struct refData {
         bytes20 hash;
-        string name;
+        bytes name;
     }
 
     mapping(bytes => address) public repoNameToOwner;
-    mapping(string => refInfo) public nameToRefInfo; // dev => {hash: 0x1234..., index: 1 }
-    string[] public refs; // [main, dev, test, staging]
+    mapping(bytes => refInfo) public nameToRefInfo; // dev => {hash: 0x1234..., index: 1 }
+    mapping(bytes => bytes[]) public repoNameToRefs; // [main, dev, test, staging]
 
     function _convertRefInfo(
+        bytes memory repoName,
         refInfo memory info
     ) internal view returns (refData memory res) {
         res.hash = info.hash;
-        res.name = refs[info.index];
+        res.name = repoNameToRefs[repoName][info.index];
     }
 
-    constructor() {
-        storageManager = IFileOperator(address(new FlatDirectory(220)));
-    }
+    constructor() LargeStorageManager(0) {}
 
     modifier onlyOwner(bytes memory repoName) {
-        require(repoNameToOwner[repoName] == msg.sender);
+        require(repoNameToOwner[repoName] == msg.sender, "only owner");
         _;
     }
 
@@ -45,57 +43,80 @@ contract Git3 {
         bytes memory path
     ) external view returns (bytes memory, bool) {
         // call flat directory(FD)
-        return storageManager.read(bytes.concat(repoName, '/', path));
+        return _get(keccak256(bytes.concat(repoName, "/", path)));
     }
 
-    function createRepo(bytes memory repoName)
-        external payable
-    {
-        require(repoNameToOwner[repoName] == address(0));
+    function createRepo(bytes memory repoName) external{
+        require(repoNameToOwner[repoName] == address(0),"RepoName already exist");
         repoNameToOwner[repoName] = msg.sender;
     }
 
-    function upload(bytes memory repoName, bytes memory path, bytes memory data)
-        external payable onlyOwner(repoName)
-    {
-        storageManager.writeChunk{value: msg.value}(bytes.concat(repoName, '/', path), 0, data);
+    function upload(
+        bytes memory repoName,
+        bytes memory path,
+        bytes calldata data
+    ) external payable onlyOwner(repoName){
+        _putChunkFromCalldata(
+            keccak256(bytes.concat(repoName, "/", path)),
+            0,
+            data,
+            msg.value
+        );
     }
 
     function uploadChunk(
         bytes memory repoName,
         bytes memory path,
         uint256 chunkId,
-        bytes memory data
-    ) external payable onlyOwner(repoName) {
-        storageManager.writeChunk{value: msg.value}(bytes.concat(repoName, '/', path), chunkId, data);
+        bytes calldata data
+    ) external payable onlyOwner(repoName){
+        _putChunkFromCalldata(
+            keccak256(bytes.concat(repoName, "/", path)),
+            chunkId,
+            data,
+            msg.value
+        );
     }
 
-    function remove(bytes memory repoName, bytes memory path) external onlyOwner(repoName) {
-
+    function remove(
+        bytes memory repoName,
+        bytes memory path
+    ) external onlyOwner(repoName) {
         // The actually process of remove will remove all the chunks
-        storageManager.remove(bytes.concat(repoName, '/', path));
+        _remove(keccak256(bytes.concat(repoName, "/", path)), 0);
     }
 
-    function size(string memory name) external view returns (uint256, uint256) {
-        return storageManager.size(bytes(name));
+    function size(
+        bytes memory repoName,
+        bytes memory name
+    ) external view returns (uint256, uint256) {
+        return _size(keccak256(bytes.concat(repoName, "/", name)));
     }
 
-    function countChunks(string memory name) external view returns (uint256) {
-        return storageManager.countChunks(bytes(name));
+    function countChunks(
+        bytes memory repoName,
+        bytes memory name
+    ) external view returns (uint256) {
+        return _countChunks(keccak256(bytes.concat(repoName, "/", name)));
     }
 
-    function listRefs() public view returns (refData[] memory list) {
-        list = new refData[](refs.length);
-        for (uint index = 0; index < refs.length; index++) {
-            list[index] = _convertRefInfo(nameToRefInfo[refs[index]]);
+    function listRefs(bytes memory repoName) public view returns (refData[] memory list) {
+        list = new refData[](repoNameToRefs[repoName].length);
+        for (uint index = 0; index < repoNameToRefs[repoName].length; index++) {
+            list[index] = _convertRefInfo(repoName,nameToRefInfo[repoNameToRefs[repoName][index]]);
         }
     }
 
-    function setRef(bytes memory repoName, string memory name, bytes20 refHash) public onlyOwner(repoName) {
+    function setRef(
+        bytes memory repoName,
+        bytes memory name,
+        bytes20 refHash
+    ) public onlyOwner(repoName){
+        bytes memory fullName = bytes.concat(repoName, "/", name);
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
-        srs = nameToRefInfo[name];
-        uint256 refsLen = refs.length;
+        srs = nameToRefInfo[fullName];
+        uint256 refsLen = repoNameToRefs[repoName].length;
 
         if (srs.hash == bytes20(0)) {
             // store refHash for the first time
@@ -104,21 +125,25 @@ contract Git3 {
                 "Refs exceed valid length"
             );
 
-            nameToRefInfo[name].hash = refHash;
-            nameToRefInfo[name].index = uint96(refsLen);
+            nameToRefInfo[fullName].hash = refHash;
+            nameToRefInfo[fullName].index = uint96(refsLen);
 
-            refs.push(name);
+            repoNameToRefs[repoName].push(fullName);
         } else {
             // only update refHash
-            nameToRefInfo[name].hash = refHash;
+            nameToRefInfo[fullName].hash = refHash;
         }
     }
 
-    function delRef(bytes memory repoName, string memory name) public onlyOwner(repoName) {
+    function delRef(
+        bytes memory repoName,
+        bytes memory name
+    ) public onlyOwner(repoName) {
+        bytes memory fullName = bytes.concat(repoName, "/", name);
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
-        srs = nameToRefInfo[name];
-        uint256 refsLen = refs.length;
+        srs = nameToRefInfo[fullName];
+        uint256 refsLen = repoNameToRefs[repoName].length;
 
         require(
             srs.hash != bytes20(0),
@@ -127,10 +152,10 @@ contract Git3 {
         require(srs.index < refsLen, "System Error: Invalid index");
 
         if (srs.index < refsLen - 1) {
-            refs[srs.index] = refs[refsLen - 1];
-            nameToRefInfo[refs[refsLen - 1]].index = srs.index;
+            repoNameToRefs[repoName][srs.index] = repoNameToRefs[repoName][refsLen - 1];
+            nameToRefInfo[repoNameToRefs[repoName][refsLen - 1]].index = srs.index;
         }
-        refs.pop();
-        delete nameToRefInfo[name];
+        repoNameToRefs[repoName].pop();
+        delete nameToRefInfo[fullName];
     }
 }
