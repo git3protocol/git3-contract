@@ -37,6 +37,7 @@
     "@openzeppelin/contracts": "^4.8.0",
     "chai": "^4.3.7",
     "evm-large-storage": "^1.0.0",
+    "git3-evm-large-storage": "^1.0.2",
     "typechain": "^8.1.1"
   }
 }
