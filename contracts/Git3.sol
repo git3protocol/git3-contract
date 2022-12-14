@@ -46,8 +46,26 @@ contract Git3 is LargeStorageManager {
         return _get(keccak256(bytes.concat(repoName, "/", path)));
     }
 
-    function createRepo(bytes memory repoName) external{
-        require(repoNameToOwner[repoName] == address(0),"RepoName already exist");
+    function createRepo(bytes memory repoName) external {
+        require(
+            repoName.length > 0 && repoName.length <= 100,
+            "RepoName length must be 1-100"
+        );
+        for (uint i; i < repoName.length; i++) {
+            bytes1 char = repoName[i];
+            require(
+                (char >= 0x61 && char <= 0x7A) || //a-z
+                    (char >= 0x41 && char <= 0x5A) || //A-Z
+                    (char >= 0x30 && char <= 0x39) || //0-9
+                    (char == 0x2D || char == 0x2E || char == 0x5F), //-._
+                "RepoName must be alphanumeric or -._"
+            );
+        }
+
+        require(
+            repoNameToOwner[repoName] == address(0),
+            "RepoName already exist"
+        );
         repoNameToOwner[repoName] = msg.sender;
     }
 
@@ -55,7 +73,7 @@ contract Git3 is LargeStorageManager {
         bytes memory repoName,
         bytes memory path,
         bytes calldata data
-    ) external payable onlyOwner(repoName){
+    ) external payable onlyOwner(repoName) {
         _putChunkFromCalldata(
             keccak256(bytes.concat(repoName, "/", path)),
             0,
@@ -69,7 +87,7 @@ contract Git3 is LargeStorageManager {
         bytes memory path,
         uint256 chunkId,
         bytes calldata data
-    ) external payable onlyOwner(repoName){
+    ) external payable onlyOwner(repoName) {
         _putChunkFromCalldata(
             keccak256(bytes.concat(repoName, "/", path)),
             chunkId,
@@ -100,10 +118,15 @@ contract Git3 is LargeStorageManager {
         return _countChunks(keccak256(bytes.concat(repoName, "/", name)));
     }
 
-    function listRefs(bytes memory repoName) public view returns (refData[] memory list) {
+    function listRefs(
+        bytes memory repoName
+    ) public view returns (refData[] memory list) {
         list = new refData[](repoNameToRefs[repoName].length);
         for (uint index = 0; index < repoNameToRefs[repoName].length; index++) {
-            list[index] = _convertRefInfo(repoName,nameToRefInfo[repoNameToRefs[repoName][index]]);
+            list[index] = _convertRefInfo(
+                repoName,
+                nameToRefInfo[repoNameToRefs[repoName][index]]
+            );
         }
     }
 
@@ -111,7 +134,7 @@ contract Git3 is LargeStorageManager {
         bytes memory repoName,
         bytes memory name,
         bytes20 refHash
-    ) public onlyOwner(repoName){
+    ) public onlyOwner(repoName) {
         bytes memory fullName = bytes.concat(repoName, "/", name);
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
@@ -152,8 +175,11 @@ contract Git3 is LargeStorageManager {
         require(srs.index < refsLen, "System Error: Invalid index");
 
         if (srs.index < refsLen - 1) {
-            repoNameToRefs[repoName][srs.index] = repoNameToRefs[repoName][refsLen - 1];
-            nameToRefInfo[repoNameToRefs[repoName][refsLen - 1]].index = srs.index;
+            repoNameToRefs[repoName][srs.index] = repoNameToRefs[repoName][
+                refsLen - 1
+            ];
+            nameToRefInfo[repoNameToRefs[repoName][refsLen - 1]].index = srs
+                .index;
         }
         repoNameToRefs[repoName].pop();
         delete nameToRefInfo[fullName];
