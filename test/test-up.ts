@@ -10,13 +10,6 @@ async function main() {
     "Git3",
     "0xa709975Bc01e745432f8898499E7b9a60f420117"
   );
-  let storageManager = await Git3.storageManager();
-  console.log("storageManager", storageManager);
-
-  const flat = await hre.ethers.getContractAt("FlatDirectory", storageManager);
-  let owner = await flat.owner();
-  console.log("owner", owner);
-  return;
 
   let file = fs.readFileSync("test/git3.png");
 

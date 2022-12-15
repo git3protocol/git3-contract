@@ -38,6 +38,37 @@ contract Git3 is LargeStorageManager {
         _;
     }
 
+    function createRepo(bytes memory repoName) external {
+        require(
+            repoName.length > 0 && repoName.length <= 100,
+            "RepoName length must be 1-100"
+        );
+        for (uint i; i < repoName.length; i++) {
+            bytes1 char = repoName[i];
+            require(
+                (char >= 0x61 && char <= 0x7A) || //a-z
+                    (char >= 0x41 && char <= 0x5A) || //A-Z
+                    (char >= 0x30 && char <= 0x39) || //0-9
+                    (char == 0x2D || char == 0x2E || char == 0x5F), //-._
+                "RepoName must be alphanumeric or -._"
+            );
+        }
+
+        require(
+            repoNameToOwner[repoName] == address(0),
+            "RepoName already exist"
+        );
+        repoNameToOwner[repoName] = msg.sender;
+    }
+
+    function transferOwnership(bytes memory repoName, address newOwner)
+        external
+        onlyOwner(repoName)
+    {
+        require(newOwner != address(0), "newOwner must not be zero address");
+        repoNameToOwner[repoName] = newOwner;
+    }
+
     function stakeTokens(
         bytes memory repoName,
         bytes memory path
@@ -62,29 +93,6 @@ contract Git3 is LargeStorageManager {
     ) external view returns (bytes memory, bool) {
         // call flat directory(FD)
         return _get(keccak256(bytes.concat(repoName, "/", path)));
-    }
-
-    function createRepo(bytes memory repoName) external {
-        require(
-            repoName.length > 0 && repoName.length <= 100,
-            "RepoName length must be 1-100"
-        );
-        for (uint i; i < repoName.length; i++) {
-            bytes1 char = repoName[i];
-            require(
-                (char >= 0x61 && char <= 0x7A) || //a-z
-                    (char >= 0x41 && char <= 0x5A) || //A-Z
-                    (char >= 0x30 && char <= 0x39) || //0-9
-                    (char == 0x2D || char == 0x2E || char == 0x5F), //-._
-                "RepoName must be alphanumeric or -._"
-            );
-        }
-
-        require(
-            repoNameToOwner[repoName] == address(0),
-            "RepoName already exist"
-        );
-        repoNameToOwner[repoName] = msg.sender;
     }
 
     function upload(

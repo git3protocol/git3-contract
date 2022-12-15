@@ -200,8 +200,8 @@ describe("Git3 Test", function () {
     const repoName = Buffer.from("test");
     await git3.createRepo(repoName);
 
-    stakeNum1 = ETH;
-    stakeNum2 = ToBig(2).mul(ETH);
+    let stakeNum1 = ETH;
+    let stakeNum2 = ToBig(2).mul(ETH);
 
     let data0 = Array.from({ length: 1024 }, () =>
       Math.floor(Math.random() * 256)
