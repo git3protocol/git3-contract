@@ -4,11 +4,9 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "./IFileOperator.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "git3-evm-large-storage/contracts/LargeStorageManager.sol";
+import "git3-evm-large-storage/contracts/v2/LargeStorageManagerV2.sol";
 
-// import "evm-large-storage/contracts/W3RC3.sol";
-
-contract Git3 is LargeStorageManager {
+contract Git3 is LargeStorageManagerV2 {
     struct refInfo {
         bytes20 hash;
         uint96 index;
@@ -31,7 +29,7 @@ contract Git3 is LargeStorageManager {
         res.name = repoNameToRefs[repoName][info.index];
     }
 
-    constructor() LargeStorageManager(0) {}
+    constructor() LargeStorageManagerV2(0) {}
 
     modifier onlyOwner(bytes memory repoName) {
         require(repoNameToOwner[repoName] == msg.sender, "only owner");
@@ -54,6 +52,15 @@ contract Git3 is LargeStorageManager {
         bytes memory fullPath = bytes.concat(repoName, "/", path);
         (uint256 sTokens, ) = _chunkStakeTokens(keccak256(fullPath), chunkId);
         return sTokens;
+    }
+
+    function getChunkAddr(
+        bytes memory repoName,
+        bytes memory path,
+        uint256 chunkId
+    ) external view returns (address) {
+        bytes memory fullPath = bytes.concat(repoName, "/", path);
+        return _getChunkAddr(keccak256(fullPath), chunkId);
     }
 
     function download(
@@ -122,6 +129,14 @@ contract Git3 is LargeStorageManager {
         _remove(keccak256(bytes.concat(repoName, "/", path)), 0);
     }
 
+    function removeChunk(
+        bytes memory repoName,
+        bytes memory path,
+        uint256 chunkId
+    ) external onlyOwner(repoName) {
+        _removeChunk(keccak256(bytes.concat(repoName, "/", path)), chunkId);
+    }
+
     function size(
         bytes memory repoName,
         bytes memory name
@@ -138,7 +153,7 @@ contract Git3 is LargeStorageManager {
 
     function listRefs(
         bytes memory repoName
-    ) public view returns (refData[] memory list) {
+    ) external view returns (refData[] memory list) {
         list = new refData[](repoNameToRefs[repoName].length);
         for (uint index = 0; index < repoNameToRefs[repoName].length; index++) {
             list[index] = _convertRefInfo(
@@ -152,7 +167,7 @@ contract Git3 is LargeStorageManager {
         bytes memory repoName,
         bytes memory name,
         bytes20 refHash
-    ) public onlyOwner(repoName) {
+    ) external onlyOwner(repoName) {
         bytes memory fullName = bytes.concat(repoName, "/", name);
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
@@ -179,7 +194,7 @@ contract Git3 is LargeStorageManager {
     function delRef(
         bytes memory repoName,
         bytes memory name
-    ) public onlyOwner(repoName) {
+    ) external onlyOwner(repoName) {
         bytes memory fullName = bytes.concat(repoName, "/", name);
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
