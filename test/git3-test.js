@@ -270,7 +270,6 @@ describe("Git3 Test", function () {
 
     // check that the stake numer of chunk after removing chunks
     let balBefore = await signer.getBalance();
-    console.log("balBefore:", balBefore);
     let tx1 = await git3.removeChunk(repoName, "0x616263", 0); // should succeed
     let rec1 = await tx1.wait();
     let removeTxCost = rec1.gasUsed.mul(rec1.effectiveGasPrice);

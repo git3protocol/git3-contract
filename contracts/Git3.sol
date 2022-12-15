@@ -98,7 +98,7 @@ contract Git3 is LargeStorageManagerV2 {
         bytes memory repoName,
         bytes memory path,
         bytes calldata data
-    ) public payable onlyOwner(repoName) {
+    ) external payable onlyOwner(repoName) {
         _putChunkFromCalldata(
             keccak256(bytes.concat(repoName, "/", path)),
             0,
@@ -112,7 +112,7 @@ contract Git3 is LargeStorageManagerV2 {
         bytes memory path,
         uint256 chunkId,
         bytes calldata data
-    ) public payable onlyOwner(repoName) {
+    ) external payable onlyOwner(repoName) {
         _putChunkFromCalldata(
             keccak256(bytes.concat(repoName, "/", path)),
             chunkId,
@@ -124,7 +124,7 @@ contract Git3 is LargeStorageManagerV2 {
     function remove(
         bytes memory repoName,
         bytes memory path
-    ) public onlyOwner(repoName) {
+    ) external onlyOwner(repoName) {
         // The actually process of remove will remove all the chunks
         _remove(keccak256(bytes.concat(repoName, "/", path)), 0);
     }
@@ -133,7 +133,7 @@ contract Git3 is LargeStorageManagerV2 {
         bytes memory repoName,
         bytes memory path,
         uint256 chunkId
-    ) public onlyOwner(repoName) {
+    ) external onlyOwner(repoName) {
         _removeChunk(keccak256(bytes.concat(repoName, "/", path)), chunkId);
     }
 
@@ -153,7 +153,7 @@ contract Git3 is LargeStorageManagerV2 {
 
     function listRefs(
         bytes memory repoName
-    ) public view returns (refData[] memory list) {
+    ) external view returns (refData[] memory list) {
         list = new refData[](repoNameToRefs[repoName].length);
         for (uint index = 0; index < repoNameToRefs[repoName].length; index++) {
             list[index] = _convertRefInfo(
@@ -167,7 +167,7 @@ contract Git3 is LargeStorageManagerV2 {
         bytes memory repoName,
         bytes memory name,
         bytes20 refHash
-    ) public onlyOwner(repoName) {
+    ) external onlyOwner(repoName) {
         bytes memory fullName = bytes.concat(repoName, "/", name);
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
@@ -194,7 +194,7 @@ contract Git3 is LargeStorageManagerV2 {
     function delRef(
         bytes memory repoName,
         bytes memory name
-    ) public onlyOwner(repoName) {
+    ) external onlyOwner(repoName) {
         bytes memory fullName = bytes.concat(repoName, "/", name);
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
