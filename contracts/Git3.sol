@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "./IFileOperator.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "evm-large-storage/contracts/LargeStorageManager.sol";
+import "git3-evm-large-storage/contracts/LargeStorageManager.sol";
 
 // import "evm-large-storage/contracts/W3RC3.sol";
 
@@ -36,6 +36,24 @@ contract Git3 is LargeStorageManager {
     modifier onlyOwner(bytes memory repoName) {
         require(repoNameToOwner[repoName] == msg.sender, "only owner");
         _;
+    }
+
+    function stakeTokens(
+        bytes memory repoName,
+        bytes memory path
+    ) external view returns (uint256) {
+        bytes memory fullPath = bytes.concat(repoName, "/", path);
+        return _stakeTokens(keccak256(fullPath), 0);
+    }
+
+    function chunkStakeTokens(
+        bytes memory repoName,
+        bytes memory path,
+        uint256 chunkId
+    ) external view returns (uint256) {
+        bytes memory fullPath = bytes.concat(repoName, "/", path);
+        (uint256 sTokens, ) = _chunkStakeTokens(keccak256(fullPath), chunkId);
+        return sTokens;
     }
 
     function download(
