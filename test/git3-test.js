@@ -2,6 +2,7 @@ const { web3 } = require("hardhat");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { defaultAbiCoder } = require("ethers/lib/utils");
+const { isConstructorDeclaration } = require("typescript");
 
 var ToBig = (x) => ethers.BigNumber.from(x);
 let ETH = ethers.BigNumber.from(10).pow(18);
@@ -243,5 +244,37 @@ describe("Git3 Test", function () {
     expect(stakeNum).to.equal(ToBig(0));
     expect(actualStakeNum1).to.equal(ToBig(0));
     expect(actualStakeNum2).to.equal(ToBig(0));
+  });
+
+  it("Refund to user directly after removing chunk", async function () {
+    const Git3 = await ethers.getContractFactory("Git3");
+    const git3 = await Git3.deploy();
+    await git3.deployed();
+
+    let signer;
+    [signer] = await ethers.getSigners();
+
+    const repoName = Buffer.from("test");
+    await git3.createRepo(repoName);
+
+    stakeNum1 = ETH;
+    stakeNum2 = ToBig(2).mul(ETH);
+
+    let data0 = Array.from({ length: 2 }, () =>
+      Math.floor(Math.random() * 256)
+    );
+
+    await git3.connect(signer).uploadChunk(repoName, "0x616263", 0, data0, {
+      value: stakeNum1,
+    });
+
+    // check that the stake numer of chunk after removing chunks
+    let balBefore = await signer.getBalance();
+    let tx1 = await git3.removeChunk(repoName, "0x616263", 0); // should succeed
+    let rec1 = await tx1.wait();
+    let removeTxCost = rec1.gasUsed.mul(rec1.effectiveGasPrice);
+    let balAfter = await signer.getBalance();
+    // check balance after refunding
+    expect(balBefore.add(stakeNum1).sub(removeTxCost)).to.eq(balAfter);
   });
 });
