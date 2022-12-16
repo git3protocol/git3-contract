@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+// import "hardhat/console.sol";
+// import "@openzeppelin/contracts/access/Ownable.sol";
 import "./v2/LargeStorageManagerV2.sol";
 
 contract Git3Hub is LargeStorageManagerV2 {
@@ -15,6 +15,14 @@ contract Git3Hub is LargeStorageManagerV2 {
         bytes20 hash;
         bytes name;
     }
+
+    event RepoCreated(bytes indexed repoName, address owner);
+    event RepoOwnerTransfer(
+        bytes indexed repoName,
+        address oldOwner,
+        address newOwner
+    );
+    event PushRef(bytes indexed repoName, bytes ref);
 
     mapping(bytes => address) public repoNameToOwner;
     mapping(bytes => refInfo) public nameToRefInfo; // dev => {hash: 0x1234..., index: 1 }
@@ -56,6 +64,7 @@ contract Git3Hub is LargeStorageManagerV2 {
             "RepoName already exist"
         );
         repoNameToOwner[repoName] = msg.sender;
+        emit RepoCreated(repoName, msg.sender);
     }
 
     function transferOwnership(
@@ -64,6 +73,7 @@ contract Git3Hub is LargeStorageManagerV2 {
     ) external onlyOwner(repoName) {
         require(newOwner != address(0), "newOwner must not be zero address");
         repoNameToOwner[repoName] = newOwner;
+        emit RepoOwnerTransfer(repoName, msg.sender, newOwner);
     }
 
     function stakeTokens(
@@ -172,10 +182,10 @@ contract Git3Hub is LargeStorageManagerV2 {
 
     function setRef(
         bytes memory repoName,
-        bytes memory name,
+        bytes memory ref,
         bytes20 refHash
     ) external onlyOwner(repoName) {
-        bytes memory fullName = bytes.concat(repoName, "/", name);
+        bytes memory fullName = bytes.concat(repoName, "/", ref);
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
         srs = nameToRefInfo[fullName];
@@ -196,13 +206,14 @@ contract Git3Hub is LargeStorageManagerV2 {
             // only update refHash
             nameToRefInfo[fullName].hash = refHash;
         }
+        emit PushRef(repoName, ref);
     }
 
     function delRef(
         bytes memory repoName,
-        bytes memory name
+        bytes memory ref
     ) external onlyOwner(repoName) {
-        bytes memory fullName = bytes.concat(repoName, "/", name);
+        bytes memory fullName = bytes.concat(repoName, "/", ref);
         // only execute `sload` once to reduce gas consumption
         refInfo memory srs;
         srs = nameToRefInfo[fullName];
