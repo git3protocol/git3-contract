@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const Git3 = await ethers.getContractFactory("Git3");
+  const Git3 = await ethers.getContractFactory("Git3Hub");
   const git3 = await Git3.deploy();
   let receipt = await git3.deployed();
 
