@@ -9,7 +9,7 @@ let ETH = ethers.BigNumber.from(10).pow(18);
 
 describe("Git3 Test", function () {
   it("upload/download/remove", async function () {
-    const Git3 = await ethers.getContractFactory("Git3");
+    const Git3 = await ethers.getContractFactory("Git3Hub");
     const git3 = await Git3.deploy();
     await git3.deployed();
 
@@ -42,7 +42,7 @@ describe("Git3 Test", function () {
   });
 
   it("upload/download/remove chunks", async function () {
-    const Git3 = await ethers.getContractFactory("Git3");
+    const Git3 = await ethers.getContractFactory("Git3Hub");
     const git3 = await Git3.deploy();
     await git3.deployed();
 
@@ -76,7 +76,7 @@ describe("Git3 Test", function () {
   });
 
   it("set/update/list/remove Reference", async function () {
-    const Git3 = await ethers.getContractFactory("Git3");
+    const Git3 = await ethers.getContractFactory("Git3Hub");
     const git3 = await Git3.deploy();
     await git3.deployed();
 
@@ -125,7 +125,7 @@ describe("Git3 Test", function () {
   });
 
   it("Access Control", async function () {
-    const Git3 = await ethers.getContractFactory("Git3");
+    const Git3 = await ethers.getContractFactory("Git3Hub");
     const git3 = await Git3.deploy();
     await git3.deployed();
 
@@ -174,7 +174,7 @@ describe("Git3 Test", function () {
   });
 
   it("RepoName Check", async function () {
-    const Git3 = await ethers.getContractFactory("Git3");
+    const Git3 = await ethers.getContractFactory("Git3Hub");
     const git3 = await Git3.deploy();
     await git3.deployed();
 
@@ -194,7 +194,7 @@ describe("Git3 Test", function () {
   });
 
   it("Get the stake number of chunks", async function () {
-    const Git3 = await ethers.getContractFactory("Git3");
+    const Git3 = await ethers.getContractFactory("Git3Hub");
     const git3 = await Git3.deploy();
     await git3.deployed();
 
@@ -247,7 +247,7 @@ describe("Git3 Test", function () {
   });
 
   it("Refund to user directly after removing chunk", async function () {
-    const Git3 = await ethers.getContractFactory("Git3");
+    const Git3 = await ethers.getContractFactory("Git3Hub");
     const git3 = await Git3.deploy();
     await git3.deployed();
 

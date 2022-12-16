@@ -7,7 +7,7 @@ async function main() {
     console.log(accounts[0].address);
 
     const Git3 = await hre.ethers.getContractAt(
-        "Git3",
+        "Git3Hub",
         "0x0068bD3ec8D16402690C1Eddff06ACb913A209ef"
     );
     let rept

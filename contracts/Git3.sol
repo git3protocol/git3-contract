@@ -6,7 +6,7 @@ import "./IFileOperator.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "git3-evm-large-storage/contracts/v2/LargeStorageManagerV2.sol";
 
-contract Git3 is LargeStorageManagerV2 {
+contract Git3Hub is LargeStorageManagerV2 {
     struct refInfo {
         bytes20 hash;
         uint96 index;
@@ -59,10 +59,10 @@ contract Git3 is LargeStorageManagerV2 {
         repoNameToOwner[repoName] = msg.sender;
     }
 
-    function transferOwnership(bytes memory repoName, address newOwner)
-        external
-        onlyOwner(repoName)
-    {
+    function transferOwnership(
+        bytes memory repoName,
+        address newOwner
+    ) external onlyOwner(repoName) {
         require(newOwner != address(0), "newOwner must not be zero address");
         repoNameToOwner[repoName] = newOwner;
     }
