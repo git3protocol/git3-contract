@@ -2,9 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import "./IFileOperator.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "git3-evm-large-storage/contracts/v2/LargeStorageManagerV2.sol";
+import "./v2/LargeStorageManagerV2.sol";
 
 contract Git3 is LargeStorageManagerV2 {
     struct refInfo {
