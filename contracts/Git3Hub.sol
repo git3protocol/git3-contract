@@ -16,13 +16,9 @@ contract Git3Hub is LargeStorageManagerV2 {
         bytes name;
     }
 
-    event RepoCreated(bytes indexed repoName, address owner);
-    event RepoOwnerTransfer(
-        bytes indexed repoName,
-        address oldOwner,
-        address newOwner
-    );
-    event PushRef(bytes indexed repoName, bytes ref);
+    event RepoCreated(bytes repoName, address owner);
+    event RepoOwnerTransfer(bytes repoName, address oldOwner, address newOwner);
+    event PushRef(bytes repoName, bytes ref);
 
     mapping(bytes => address) public repoNameToOwner;
     mapping(bytes => refInfo) public nameToRefInfo; // dev => {hash: 0x1234..., index: 1 }
