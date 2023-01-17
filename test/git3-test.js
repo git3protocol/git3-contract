@@ -8,6 +8,79 @@ var ToBig = (x) => ethers.BigNumber.from(x);
 let ETH = ethers.BigNumber.from(10).pow(18);
 
 describe("Git3 Test", function () {
+  it("Check Upgradeable", async function () {
+    let repoName = Buffer.from("test");
+    let [operator, acc1, acc2] = await ethers.getSigners();
+    const Git3 = await ethers.getContractFactory("Git3Hub");
+    const git3 = await Git3.deploy();
+    await git3.deployed();
+
+    let git3Upgraded = await Git3.connect(acc2).deploy();
+    await git3Upgraded.deployed();
+
+    let factory1 = await ethers.getContractFactory("UpgradeableProxy");
+    // Proxy don't need to init Git3 contract because the constructor is empty.
+    let initSelector = "0x";
+    let proxyInstance = await factory1
+      .connect(operator)
+      .deploy(git3.address, acc1.address, initSelector);
+    await proxyInstance.deployed();
+
+    let git3Proxy = await ethers.getContractAt(
+      "Git3Hub",
+      proxyInstance.address
+    );
+    await git3Proxy.createRepo(repoName);
+    await git3Proxy.upload(repoName, "0x616263", "0x112233");
+    expect(await git3Proxy.download(repoName, "0x616263")).to.eql([
+      "0x112233",
+      true,
+    ]);
+
+    const adminSlot =
+      "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103";
+    let actualAdmin = await web3.eth.getStorageAt(
+      proxyInstance.address,
+      adminSlot
+    );
+    let actualA = web3.utils.toBN(actualAdmin).toString();
+    let expectA = web3.utils.toBN(acc1.address).toString();
+    expect(actualA).to.equal(expectA);
+
+    await proxyInstance.connect(acc1).changeAdmin(acc2.address);
+    actualAdmin = await web3.eth.getStorageAt(proxyInstance.address, adminSlot);
+    actualA = web3.utils.toBN(actualAdmin).toString();
+    expectA = web3.utils.toBN(acc2.address).toString();
+    expect(actualA).to.equal(expectA);
+
+    const ImplementationSlot =
+      "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+    let actualImplement = await web3.eth.getStorageAt(
+      proxyInstance.address,
+      ImplementationSlot
+    );
+    let actualI = web3.utils.toBN(actualImplement).toString();
+    let expectI = web3.utils.toBN(git3.address).toString();
+    expect(actualI).to.equal(expectI);
+
+    //****upgrade contract***//
+    // await expect(proxyInstance.connect(acc2).upgradeToAndCall(git3Upgraded.address,initSelector)).to.be.revertedWith("Initializable: contract is already initialized")
+    await proxyInstance.connect(acc2).upgradeTo(git3Upgraded.address);
+
+    actualImplement = await web3.eth.getStorageAt(
+      proxyInstance.address,
+      ImplementationSlot
+    );
+    actualI = web3.utils.toBN(actualImplement).toString();
+    expectI = web3.utils.toBN(git3Upgraded.address).toString();
+    expect(actualI).to.equal(expectI);
+
+    expect(await git3Proxy.download(repoName, "0x616263")).to.eql([
+      "0x112233",
+      true,
+    ]);
+  });
+
   it("upload/download/remove", async function () {
     const Git3 = await ethers.getContractFactory("Git3Hub");
     const git3 = await Git3.deploy();

@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import "./LargeStorageManagerV2.sol";
 
 contract LargeStorageManagerV2Test is LargeStorageManagerV2 {
-    constructor(uint8 slotLimit) LargeStorageManagerV2(slotLimit) {}
-
     function get(bytes32 key) public view returns (bytes memory, bool) {
         (bytes memory data, bool found) = _get(key);
         return (data, found);

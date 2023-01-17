@@ -10,7 +10,7 @@ let ETH = ethers.BigNumber.from("10").pow("18");
 describe("FlatDirectory Test", function () {
   it("read/write", async function () {
     const FlatDirectory = await ethers.getContractFactory(contractName);
-    const fd = await FlatDirectory.deploy(0);
+    const fd = await FlatDirectory.deploy();
     await fd.deployed();
 
     await fd.putChunk(key, 0, "0x112233");
@@ -26,7 +26,7 @@ describe("FlatDirectory Test", function () {
 
   it("read/write chunks", async function () {
     const FlatDirectory = await ethers.getContractFactory(contractName);
-    const fd = await FlatDirectory.deploy(0);
+    const fd = await FlatDirectory.deploy();
     await fd.deployed();
 
     let data0 = Array.from({ length: 1024 }, () =>
@@ -51,7 +51,7 @@ describe("FlatDirectory Test", function () {
 
   it("write/remove chunks", async function () {
     const FlatDirectory = await ethers.getContractFactory(contractName);
-    const fd = await FlatDirectory.deploy(0);
+    const fd = await FlatDirectory.deploy();
     await fd.deployed();
 
     expect(await fd.countChunks(key)).to.eql(ToBig(0));
@@ -88,7 +88,7 @@ describe("FlatDirectory Test", function () {
 
   it("remove chunks and refund to user", async function () {
     const FlatDirectory = await ethers.getContractFactory(contractName);
-    const fd = await FlatDirectory.deploy(0);
+    const fd = await FlatDirectory.deploy();
     await fd.deployed();
 
     let stakeTokenNum = ETH;

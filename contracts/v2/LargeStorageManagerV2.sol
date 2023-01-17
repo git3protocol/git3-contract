@@ -10,15 +10,11 @@ contract LargeStorageManagerV2 {
     using SlotHelper for bytes32;
     using SlotHelper for address;
 
-    uint8 internal immutable SLOT_LIMIT;
+    uint8 internal constant SLOT_LIMIT = 0;
 
     mapping(bytes32 => mapping(uint256 => bytes32)) internal keyToMetadata;
     mapping(bytes32 => mapping(uint256 => mapping(uint256 => bytes32)))
         internal keyToSlots;
-
-    constructor(uint8 slotLimit) {
-        SLOT_LIMIT = slotLimit;
-    }
 
     function isOptimize() public view returns (bool) {
         return SLOT_LIMIT > 0;

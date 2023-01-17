@@ -2,6 +2,8 @@ require("dotenv").config();
 
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomiclabs/hardhat-web3";
+import "@nomiclabs/hardhat-ethers";
 import { NetworkDefinition, EtherscanConfig } from "./local.config";
 
 const config: HardhatUserConfig = {

@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 // import "@openzeppelin/contracts/access/Ownable.sol";
 import "./v2/LargeStorageManagerV2.sol";
 
-contract Git3Hub is LargeStorageManagerV2 {
+contract Git3HubStorage {
     struct refInfo {
         bytes20 hash;
         uint96 index;
@@ -16,23 +16,17 @@ contract Git3Hub is LargeStorageManagerV2 {
         bytes name;
     }
 
+    mapping(bytes => address) public repoNameToOwner;
+    mapping(bytes => refInfo) public nameToRefInfo; // dev => {hash: 0x1234..., index: 1 }
+    mapping(bytes => bytes[]) public repoNameToRefs; // [main, dev, test, staging]
+}
+
+contract Git3Hub is Git3HubStorage, LargeStorageManagerV2 {
     event RepoCreated(bytes repoName, address owner);
     event RepoOwnerTransfer(bytes repoName, address oldOwner, address newOwner);
     event PushRef(bytes repoName, bytes ref);
 
-    mapping(bytes => address) public repoNameToOwner;
-    mapping(bytes => refInfo) public nameToRefInfo; // dev => {hash: 0x1234..., index: 1 }
-    mapping(bytes => bytes[]) public repoNameToRefs; // [main, dev, test, staging]
-
-    function _convertRefInfo(
-        bytes memory repoName,
-        refInfo memory info
-    ) internal view returns (refData memory res) {
-        res.hash = info.hash;
-        res.name = repoNameToRefs[repoName][info.index];
-    }
-
-    constructor() LargeStorageManagerV2(0) {}
+    constructor() LargeStorageManagerV2() {}
 
     modifier onlyOwner(bytes memory repoName) {
         require(repoNameToOwner[repoName] == msg.sender, "only owner");
@@ -230,5 +224,13 @@ contract Git3Hub is LargeStorageManagerV2 {
         }
         repoNameToRefs[repoName].pop();
         delete nameToRefInfo[fullName];
+    }
+
+    function _convertRefInfo(
+        bytes memory repoName,
+        refInfo memory info
+    ) internal view returns (refData memory res) {
+        res.hash = info.hash;
+        res.name = repoNameToRefs[repoName][info.index];
     }
 }
