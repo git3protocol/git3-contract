@@ -8,5 +8,5 @@ contract UpgradeableProxy is TransparentUpgradeableProxy {
         address logic,
         address admin,
         bytes memory data
-    ) public TransparentUpgradeableProxy(logic, admin, data) {}
+    ) TransparentUpgradeableProxy(logic, admin, data) {}
 }
