@@ -7,11 +7,11 @@ import "./StorageSlotSelfDestructableV2.sol";
 import "../Git3HubStorage.sol";
 
 // Large storage manager to support arbitrarily-sized data with multiple chunk
-contract LargeStorageManagerV2 is Git3HubStorage {
+contract LargeStorageManagerV2 is Git3HubStorage_ES {
     using SlotHelper for bytes32;
     using SlotHelper for address;
 
-    uint8 internal constant SLOT_LIMIT = 0;                                                                                                                                                         
+    uint8 internal constant SLOT_LIMIT = 0;
 
     function isOptimize() public pure returns (bool) {
         return SLOT_LIMIT > 0;

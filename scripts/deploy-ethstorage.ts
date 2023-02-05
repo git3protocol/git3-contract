@@ -11,7 +11,7 @@ async function main() {
 
   console.log(operator.address, nonce)
 
-  const Git3 = await ethers.getContractFactory("Git3Hub");
+  const Git3 = await ethers.getContractFactory("Git3Hub_ES");
   const git3 = await Git3.deploy({ nonce: nonce });
 
   let logicReceipt = await git3.deployed()

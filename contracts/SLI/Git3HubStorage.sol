@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-contract Git3HubStorage {
+contract Git3HubStorage_SLI {
     struct refInfo {
         bytes20 hash;
         uint96 index;
@@ -11,10 +11,9 @@ contract Git3HubStorage {
         bytes20 hash;
         bytes name;
     }
-    // LargeStorageManagerV2 Storage Layout
-    mapping(bytes32 => mapping(uint256 => bytes32)) internal keyToMetadata;
-    mapping(bytes32 => mapping(uint256 => mapping(uint256 => bytes32)))
-        internal keyToSlots;  
+    // FileStorage Storage Layout
+    mapping(bytes32 => bytes) public pathToHash;
+    
 
     // Git3Hub Storage Layout
     mapping(bytes => address) public repoNameToOwner;
