@@ -16,7 +16,6 @@ async function main() {
     type: 2,
     maxFeePerGas: price.maxFeePerGas!,
     maxPriorityFeePerGas: price.maxPriorityFeePerGas!,
-    gasLimit: 3000000,
   });
 
   let logicReceipt = await git3.deployed();

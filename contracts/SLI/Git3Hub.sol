@@ -64,6 +64,19 @@ contract Git3Hub_SLI is Git3HubStorage_SLI {
         pathToHash[keccak256(bytes.concat(repoName, "/", path))] = data;
     }
 
+    function batchUpload(
+        bytes memory repoName,
+        bytes[] memory path,
+        bytes[] calldata data
+    ) external payable onlyOwner(repoName) {
+        require(path.length == data.length, "path and data length mismatch");
+        for (uint i = 0; i < path.length; i++) {
+            pathToHash[keccak256(bytes.concat(repoName, "/", path[i]))] = data[
+                i
+            ];
+        }
+    }
+
     function remove(
         bytes memory repoName,
         bytes memory path
