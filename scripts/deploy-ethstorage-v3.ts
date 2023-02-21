@@ -1,14 +1,3 @@
-// const hubfacFac = await ethers.getContractFactory("HubFactory");
-//       const hubFac = await hubfacFac.deploy();
-//       await hubFac.deployed();
-  
-//       await hubFac.newHubImp();
-  
-//       expect(await hubFac.createHub(true)).to.emit(hubFac,"CreateHub");
-//       let hub = await hubFac.hubs(0);
-//       console.log(hub);
-//       let git3 = await ethers.getContractAt("Hubv3",hub)
-
 
 import { ethers } from "hardhat";
 
