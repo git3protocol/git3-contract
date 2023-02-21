@@ -5,21 +5,38 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
-import "./Repository.sol";
+import "./EnumerableSet.sol";
+import "./Repositorylib.sol";
+import "./database/database.sol";
 contract Hub is AccessControlEnumerableUpgradeable{
-    // AccessController public accessController;
 
-    mapping(bytes=>address) public nameToRepository;
-    bytes[] public repoNames;
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using RepositoryLib for RepositoryLib.BranchInfo;
 
-    bytes32 public constant CREATOR = bytes32(uint256(1));
-    bytes32 public constant MANAGER =  bytes32(uint256(2));
-    bytes32 public constant CONTRIBUTOR =  bytes32(uint256(3));
+    // Hub Info
+    bytes32 public constant CREATOR = bytes32(uint256(0));
+    bytes32 public constant MANAGER =  bytes32(uint256(1));
+    bytes32 public constant CONTRIBUTOR =  bytes32(uint256(2));
     bytes32[] public RoleList = [CREATOR,MANAGER,CONTRIBUTOR];
-    // mapping(bytes32=>address)public executors;
-
     bool public permissionless;
 
+    // Repository Info
+    struct RepositoryInfo{
+        uint256 repoNameIndex;
+        address owner;
+        bool    exist;
+        EnumerableSet.AddressSet repoContributors;
+        RepositoryLib.BranchInfo branchs;
+    }
+
+    mapping(bytes=>RepositoryInfo) nameToRepository;
+    bytes[] public repoNames;
+
+    // DataBase Info 
+    database public db;
+
+
+    // ===== hub operator functions====== 
     function openPermissonlessJoin(bool open) public {
         require(hasRole(CREATOR, _msgSender()));
         permissionless = open;
@@ -38,8 +55,8 @@ contract Hub is AccessControlEnumerableUpgradeable{
     }
 
     //createRepository can be invoked by anyone within Hub 
-    function createRepository(bytes memory repoName) public returns(address){
-        require(hasRole(CREATOR, _msgSender()));
+    function createRepository(bytes memory repoName) public{
+        require(memberShip());
         require(
             repoName.length > 0 && repoName.length <= 100,
             "RepoName length must be 1-100"
@@ -55,22 +72,22 @@ contract Hub is AccessControlEnumerableUpgradeable{
             );
         }
 
+        RepositoryInfo storage repo = nameToRepository[repoName];
         require(
-            nameToRepository[repoName] == address(0),
+            repo.exist == false ,
             "RepoName already exist"
         );
-        address repo = address(new Repository(repoName));
-        nameToRepository[repoName] = repo;
+        
+        repo.repoNameIndex = repoNames.length;
+        repo.owner = _msgSender();
+        repo.exist =  true;
         repoNames.push(repoName);
-        return repo;
     }
 
     function deleteRepository(bytes memory repoName) public returns(address){
-        require(nameToRepository[repoName]!=address(0),"repoName do not exist");
-        address repoAddr = nameToRepository[repoName];
+        require(hasRole(CREATOR, _msgSender()) || hasRole(MANAGER, _msgSender()));
+        require(nameToRepository[repoName].exist==true,"repoName do not exist");    
         delete(nameToRepository[repoName]);
-        // todo:remove repoName from repoNames 
-        return repoAddr;
     }
 
     function addMember( bytes32 senderRole , bytes32 role,address member) public{
@@ -81,7 +98,6 @@ contract Hub is AccessControlEnumerableUpgradeable{
 
 
     function deleteMember(bytes32 senderRole  ,bytes32 role,address member) public{
-        require(hasRole(CREATOR, _msgSender()));
         require(hasRole(senderRole, _msgSender()));
         require(senderRole>role);
         revokeRole(role, member);
@@ -93,5 +109,58 @@ contract Hub is AccessControlEnumerableUpgradeable{
         grantRole(CONTRIBUTOR, _msgSender());
     }
 
+    // ===== repository operator functions====== 
+
+    function isRepoContributor(bytes memory repoName , address member) internal view returns(bool){
+        RepositoryInfo storage repo = nameToRepository[repoName];
+        if (repo.owner == member) return true;
+        if (repo.repoContributors.contains(member)) {
+            return true;
+        }else {
+            return false;
+        }
+    }
+    
+    function listRepoBranchs( bytes memory repoName)external view {
+        nameToRepository[repoName].branchs.listBranchs();
+    }
+
+    function updateRepoBranch(
+        bytes memory repoName,
+        bytes memory branchPath,
+        bytes20 refHash
+    )external{
+        require(isRepoContributor(repoName, _msgSender()));
+        nameToRepository[repoName].branchs.updateBranch(repoName,branchPath,refHash);
+    }
+
+    function removeRepoBranch(
+        bytes memory repoName,
+        bytes memory branchPath
+    ) external{
+        require(isRepoContributor(repoName, _msgSender()));
+        nameToRepository[repoName].branchs.removeBranch(repoName,branchPath);
+    }
+
+    // ===== database operator functions======    
+    function newDataBase() external onlyRole(CREATOR) {
+        
+    }
+
+    function download(
+        bytes memory repoName,
+        bytes memory path
+    ) external view returns (bytes memory, bool) {
+        // call flat directory(FD)
+        return db.download(repoName, path);
+    }
+
+    function upload(
+        bytes memory repoName,
+        bytes memory path,
+        bytes calldata data
+    ) external payable {
+        return db.upload(repoName, path,data);
+    }
 
 }
