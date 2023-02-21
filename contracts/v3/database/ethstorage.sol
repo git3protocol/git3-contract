@@ -1,6 +1,8 @@
 pragma solidity ^0.8.0;
 import "./EthStorage/LargeStorageManagerV2.sol";
-contract EthStorage is LargeStorageManagerV2{
+import "./database.sol";
+
+contract ethstorage is LargeStorageManagerV2, database {
     function stakeTokens(
         bytes memory repoName,
         bytes memory path
@@ -31,7 +33,7 @@ contract EthStorage is LargeStorageManagerV2{
     function download(
         bytes memory repoName,
         bytes memory path
-    ) external view returns (bytes memory, bool) {
+    ) external view override returns (bytes memory, bool) {
         // call flat directory(FD)
         return _get(keccak256(bytes.concat(repoName, "/", path)));
     }
@@ -40,7 +42,7 @@ contract EthStorage is LargeStorageManagerV2{
         bytes memory repoName,
         bytes memory path,
         bytes calldata data
-    ) external payable {
+    ) external payable override {
         _putChunkFromCalldata(
             keccak256(bytes.concat(repoName, "/", path)),
             0,
@@ -54,7 +56,7 @@ contract EthStorage is LargeStorageManagerV2{
         bytes memory path,
         uint256 chunkId,
         bytes calldata data
-    ) external payable{
+    ) external payable {
         _putChunkFromCalldata(
             keccak256(bytes.concat(repoName, "/", path)),
             chunkId,
@@ -63,10 +65,7 @@ contract EthStorage is LargeStorageManagerV2{
         );
     }
 
-    function remove(
-        bytes memory repoName,
-        bytes memory path
-    ) external  {
+    function remove(bytes memory repoName, bytes memory path) external {
         // The actually process of remove will remove all the chunks
         _remove(keccak256(bytes.concat(repoName, "/", path)), 0);
     }
@@ -75,7 +74,7 @@ contract EthStorage is LargeStorageManagerV2{
         bytes memory repoName,
         bytes memory path,
         uint256 chunkId
-    ) external  {
+    ) external {
         _removeChunk(keccak256(bytes.concat(repoName, "/", path)), chunkId);
     }
 
