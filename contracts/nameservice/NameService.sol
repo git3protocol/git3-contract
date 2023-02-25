@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract Git3NameService {
     mapping(string => address) public nameHub;
+    mapping(address => string) public hubName;
     mapping(string => address) public nameOwner;
     string[] public nameList;
 
@@ -18,6 +19,7 @@ contract Git3NameService {
     function registerHub(string memory name, address hub) public {
         require(nameHub[name] == address(0), "Name already registered");
         nameHub[name] = hub;
+        hubName[hub] = name;
         nameOwner[name] = msg.sender;
         nameList.push(name);
     }
@@ -31,6 +33,7 @@ contract Git3NameService {
         address hub
     ) public onlyHubOwner(name) {
         nameHub[name] = hub;
+        hubName[hub] = name;
     }
 
     function transferNameOwner(

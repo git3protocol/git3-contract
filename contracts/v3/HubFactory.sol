@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: GLP-3.0
 pragma solidity ^0.8.0;
 
 // import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -8,12 +9,14 @@ import "./Hubv3.sol";
 
 contract HubFactory is Ownable {
     event CreateHub(address indexed hub, address indexed creator);
+
+    bool public dbSelector;
     address[] public hubs;
     Hubv3 public hubImp;
 
-    // function initialize() initializer public {
-    //     __Ownable_init();
-    // }
+    constructor(bool _dbSelector) {
+        dbSelector = _dbSelector;
+    }
 
     function newHubImp() public onlyOwner {
         hubImp = new Hubv3();
@@ -23,10 +26,10 @@ contract HubFactory is Ownable {
         hubImp = Hubv3(addr);
     }
 
-    function createHub(bool dbSelector) external {
+    function createHub(bool isPermissionless) external{
         address instance = Clones.clone(address(hubImp));
         hubs.push(instance);
-        Hubv3(instance).initialize(dbSelector, _msgSender());
+        Hubv3(instance).initialize(dbSelector, _msgSender(), isPermissionless);
         emit CreateHub(instance, _msgSender());
     }
 }

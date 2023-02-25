@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: GLP-3.0
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -41,11 +42,16 @@ contract Hubv3 is AccessControl, Initializable {
         _setRoleAdmin(CONTRIBUTOR, MANAGER);
     }
 
-    function initialize(bool dbSelector, address user) public initializer {
+    function initialize(
+        bool dbSelector,
+        address user,
+        bool isPermissionless
+    ) public initializer {
         _setupRole(AccessControl.DEFAULT_ADMIN_ROLE, user);
         _setupRole(MANAGER, user);
         _setRoleAdmin(CONTRIBUTOR, MANAGER);
         _newDataBase(dbSelector);
+        permissionless = isPermissionless;
     }
 
     // ===== hub operator functions======
@@ -226,9 +232,9 @@ contract Hubv3 is AccessControl, Initializable {
     }
 
     // ===== database operator functions======
-    function newDataBase(bool flag) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _newDataBase(flag);
-    }
+    // function newDataBase(bool flag) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    //     _newDataBase(flag);
+    // }
 
     function _newDataBase(bool flag) internal {
         if (flag) {
@@ -252,5 +258,16 @@ contract Hubv3 is AccessControl, Initializable {
         bytes calldata data
     ) external payable {
         return db.upload(repoName, path, data);
+    }
+
+    function batchUpload(
+        bytes memory repoName,
+        bytes[] memory path,
+        bytes[] calldata data
+    ) external payable {
+        require(path.length == data.length, "path and data length mismatch");
+        for (uint i = 0; i < path.length; i++) {
+            db.upload(repoName, path[i], data[i]);
+        }
     }
 }
