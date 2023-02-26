@@ -108,7 +108,7 @@ contract Hubv3 is AccessControl, Initializable {
     // permissionlessJoin can be invoked by everyone who want to join this hub
     function permissionlessJoin() public {
         require(permissionless, "permissionless join no open");
-        grantRole(CONTRIBUTOR, _msgSender());
+        _setupRole(CONTRIBUTOR, _msgSender());
     }
 
     // ===== repository operator functions======
