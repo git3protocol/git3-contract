@@ -12,4 +12,11 @@ interface database {
         bytes memory path,
         bytes calldata data
     ) external payable;
+
+     function uploadChunk(
+        bytes memory repoName,
+        bytes memory path,
+        uint256 chunkId,
+        bytes calldata data
+    ) external payable;
 }

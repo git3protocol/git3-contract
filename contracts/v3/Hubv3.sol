@@ -1,15 +1,14 @@
 //SPDX-License-Identifier: GLP-3.0
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./EnumerableSet.sol";
 import "./Repolib.sol";
 import "./database/database.sol";
 import "./database/ethstorage.sol";
 import "./database/filecoin.sol";
 
-contract Hubv3 is AccessControl, Initializable {
+contract Hubv3 is AccessControlEnumerable, Initializable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using Repolib for Repolib.BranchInfo;
 
@@ -55,7 +54,7 @@ contract Hubv3 is AccessControl, Initializable {
     }
 
     // ===== hub operator functions======
-    function openPermissonlessJoin(bool open) public {
+    function setPermissonlessJoin(bool open) public {
         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()));
         permissionless = open;
     }
@@ -89,6 +88,14 @@ contract Hubv3 is AccessControl, Initializable {
         return false;
     }
 
+    function roleToMembers(bytes32 role) public view returns(address[] memory members){
+        uint256 count = getRoleMemberCount(role);
+        members = new address[](count);
+        for (uint i = 0; i < count; i++){
+            members[i] = getRoleMember(role, i);
+        }
+    }
+
     function addManager(address member) public {
         grantRole(MANAGER, member);
     }
@@ -112,6 +119,11 @@ contract Hubv3 is AccessControl, Initializable {
     }
 
     // ===== repository operator functions======
+
+    function repoList() public view returns(bytes[] memory rn){
+        return repoNames;
+    }
+
     //createRepository can be invoked by anyone within Hub
     function createRepo(bytes memory repoName) public {
         require(membership(_msgSender()));
@@ -258,6 +270,15 @@ contract Hubv3 is AccessControl, Initializable {
         bytes calldata data
     ) external payable {
         return db.upload(repoName, path, data);
+    }
+
+    function uploadChunk(
+        bytes memory repoName,
+        bytes memory path,
+        uint256  chunkId,
+        bytes calldata data
+    ) external payable {
+        return db.uploadChunk(repoName, path,chunkId, data);
     }
 
     function batchUpload(

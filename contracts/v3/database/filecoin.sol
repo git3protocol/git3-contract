@@ -23,4 +23,13 @@ contract filecoin is database {
         bytes32 fullName = keccak256(bytes.concat(repoName, "/", path));
         pathToHash[fullName] = data;
     }
+
+     function uploadChunk(
+        bytes memory repoName,
+        bytes memory path,
+        uint256 chunkId,
+        bytes calldata data
+    ) external payable override {
+        revert("unsupport uploadChunk");
+    }
 }

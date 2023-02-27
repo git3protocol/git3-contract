@@ -12,7 +12,7 @@ describe("Hub V3 Test", function () {
 
     it("Hub Access Control", async function () {
       const hubfacFac = await ethers.getContractFactory("HubFactory");
-      const hubFac = await hubfacFac.deploy();
+      const hubFac = await hubfacFac.deploy(false);
       await hubFac.deployed();
   
       await hubFac.newHubImp();
@@ -29,12 +29,23 @@ describe("Hub V3 Test", function () {
         expect(IsManager).to.equal(true);
         expect(IsContributor).to.equal(false);
 
+        let ADMIN_ROLE = await git3.DEFAULT_ADMIN_ROLE();
+        let addrs = await git3.roleToMembers(ADMIN_ROLE);
+        expect(addrs[0]).to.equal(singer.address);
+
         await git3.addManager(manager1.address)
         await git3.addManager(manager2.address)
         let roles = await git3.memberRole(manager1.address)
         expect(roles[0]).to.equal(false);
         expect(roles[1]).to.equal(true);
         expect(roles[2]).to.equal(false);
+
+        let MANAGER_ROLE = await git3.MANAGER();
+        let m_addrs = await git3.roleToMembers(MANAGER_ROLE);
+        expect(m_addrs[0]).to.equal(singer.address);
+        expect(m_addrs[1]).to.equal(manager1.address);
+        expect(m_addrs[2]).to.equal(manager2.address);
+
 
         roles = await git3.memberRole(manager2.address)
         expect(roles[0]).to.equal(false);
@@ -46,6 +57,10 @@ describe("Hub V3 Test", function () {
         expect(roles[0]).to.equal(false);
         expect(roles[1]).to.equal(false);
         expect(roles[2]).to.equal(false);
+        m_addrs = await git3.roleToMembers(MANAGER_ROLE);
+        expect(m_addrs.length).to.equal(2);
+        expect(m_addrs[0]).to.equal(singer.address);
+        expect(m_addrs[1]).to.equal(manager1.address);
 
         // power no enough
         await expect(
@@ -118,7 +133,7 @@ describe("Hub V3 Test", function () {
 
   it("upload/download/remove", async function () {
     const hubfacFac = await ethers.getContractFactory("HubFactory");
-    const hubFac = await hubfacFac.deploy();
+    const hubFac = await hubfacFac.deploy(true);
     await hubFac.deployed();
 
     await hubFac.newHubImp();
@@ -158,7 +173,7 @@ describe("Hub V3 Test", function () {
 
   it("set/update/list/remove Branch", async function () {
     const hubfacFac = await ethers.getContractFactory("HubFactory");
-    const hubFac = await hubfacFac.deploy();
+    const hubFac = await hubfacFac.deploy(true);
     await hubFac.deployed();
 
     await hubFac.newHubImp();
@@ -214,9 +229,8 @@ describe("Hub V3 Test", function () {
 
   it("HubFactory", async function () {
 
-
     const hubfacFac = await ethers.getContractFactory("HubFactory");
-    const hubFac = await hubfacFac.deploy();
+    const hubFac = await hubfacFac.deploy(true);
     await hubFac.deployed();
 
     await hubFac.newHubImp();
