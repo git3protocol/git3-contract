@@ -22,12 +22,13 @@ contract LargeStorageManagerV2 {
     function _preparePut(bytes32 key, uint256 chunkId) private {
         bytes32 metadata = keyToMetadata[key][chunkId];
 
-        if (metadata == bytes32(0)) {
-            require(
-                chunkId == 0 || keyToMetadata[key][chunkId - 1] != bytes32(0x0),
-                "must replace or append"
-            );
-        }
+        // Remove the following code to support out-of-order upload chunks
+        // if (metadata == bytes32(0)) {
+        //     require(
+        //         chunkId == 0 || keyToMetadata[key][chunkId - 1] != bytes32(0x0),
+        //         "must replace or append"
+        //     );
+        // }
 
         if (!metadata.isInSlot()) {
             address addr = metadata.bytes32ToAddr();
