@@ -269,7 +269,7 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
         bytes memory path,
         bytes calldata data
     ) external payable {
-        return db.upload(repoName, path, data);
+        return db.upload{value:msg.value}(repoName, path, data);
     }
 
     function uploadChunk(
@@ -278,7 +278,7 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
         uint256  chunkId,
         bytes calldata data
     ) external payable {
-        return db.uploadChunk(repoName, path,chunkId, data);
+        return db.uploadChunk{value:msg.value}(repoName, path,chunkId, data);
     }
 
     function batchUpload(

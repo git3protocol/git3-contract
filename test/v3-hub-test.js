@@ -227,6 +227,37 @@ describe("Hub V3 Test", function () {
     expect(refs[0]).to.eql([data3, concatHexStr(repoName, key2)]);
   });
 
+  it("upload chunks", async function () {
+    const hubfacFac = await ethers.getContractFactory("HubFactory");
+    const hubFac = await hubfacFac.deploy(true);
+    await hubFac.deployed();
+
+    await hubFac.newHubImp();
+
+    expect(await hubFac.createHub(true)).to.emit(hubFac,"CreateHub");
+    let hub = await hubFac.hubs(0);
+    console.log(hub);
+    let git3 = await ethers.getContractAt("Hubv3",hub)
+
+    let chunk = Buffer.alloc(10 * 1024, Math.random(1024).toString());
+    console.log(chunk);
+    let chunk_1 = Buffer.alloc(5*1024)
+    let chunk_2 = Buffer.alloc(2*1024)
+    chunk.copy(chunk_1,0,0,5*1024)
+    chunk.copy(chunk_2,0,5*1024,7*1024)
+    expect(chunk.compare(chunk_1,0,5*1024,0,5*1024)).to.eq(0);
+    expect(chunk.compare(chunk_2,0,2*1024,5*1024,7*1024)).to.eq(0);
+    expect(chunk.length).to.eq(10 * 1024);
+
+
+
+    let tx = await git3.uploadChunk(Buffer.from("git3"),Buffer.from("git3/test") ,0,"0x"+chunk.toString("hex"),{value:ethers.utils.parseEther("1")})
+    let rec = await tx.wait();
+    console.log("Receipt:",rec)
+    let context = await git3.download(Buffer.from("git3"),Buffer.from("git3/test"))
+    expect(context[0]).to.equal("0x"+chunk.toString("hex"));
+  })
+
   it("HubFactory", async function () {
 
     const hubfacFac = await ethers.getContractFactory("HubFactory");
