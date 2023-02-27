@@ -20,7 +20,7 @@ async function main() {
   let newHubReceipt = await hubFac.newHubImp({ nonce: nonce });
   nonce++;
 
-  let createHubReceipt = await hubFac.createHub({ nonce: nonce });
+  let createHubReceipt = await hubFac.createHub(false, { nonce: nonce });
   nonce++;
 
   let hubAddr = await hubFac.hubs(0);

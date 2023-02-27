@@ -22,7 +22,7 @@ async function main() {
 
   await newHubReceipt.wait();
 
-  let createHubReceipt = await hubFac.createHub({ nonce: nonce });
+  let createHubReceipt = await hubFac.createHub(false, { nonce: nonce });
   nonce++;
 
   await createHubReceipt.wait();
