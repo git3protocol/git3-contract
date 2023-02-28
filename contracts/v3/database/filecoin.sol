@@ -24,12 +24,16 @@ contract filecoin is database {
         pathToHash[fullName] = data;
     }
 
-     function uploadChunk(
+    function uploadChunk(
         bytes memory repoName,
         bytes memory path,
         uint256 chunkId,
         bytes calldata data
     ) external payable override {
+        repoName;
+        path;
+        chunkId;
+        data;
         revert("unsupport uploadChunk");
     }
 }

@@ -12,6 +12,9 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using Repolib for Repolib.BranchInfo;
 
+    event RepoCreated(bytes repoName, address owner);
+    event SetRepoRef(bytes repoName, bytes branchPath, bytes20 refHash);
+
     // Hub Info
     // bytes32 public constant CREATOR = bytes32(uint256(1));
     bytes32 public constant MANAGER = bytes32(uint256(1));
@@ -88,10 +91,12 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
         return false;
     }
 
-    function roleToMembers(bytes32 role) public view returns(address[] memory members){
+    function roleToMembers(
+        bytes32 role
+    ) public view returns (address[] memory members) {
         uint256 count = getRoleMemberCount(role);
         members = new address[](count);
-        for (uint i = 0; i < count; i++){
+        for (uint i = 0; i < count; i++) {
             members[i] = getRoleMember(role, i);
         }
     }
@@ -120,7 +125,7 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
 
     // ===== repository operator functions======
 
-    function repoList() public view returns(bytes[] memory rn){
+    function repoList() public view returns (bytes[] memory rn) {
         return repoNames;
     }
 
@@ -149,6 +154,7 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
         repo.owner = _msgSender();
         repo.exist = true;
         repoNames.push(repoName);
+        emit RepoCreated(repoName, repo.owner);
     }
 
     function deleteRepo(bytes memory repoName) public {
@@ -225,6 +231,7 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
             branchPath,
             refHash
         );
+        emit SetRepoRef(repoName, branchPath, refHash);
     }
 
     function getRepoRef(
@@ -269,16 +276,16 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
         bytes memory path,
         bytes calldata data
     ) external payable {
-        return db.upload{value:msg.value}(repoName, path, data);
+        return db.upload{value: msg.value}(repoName, path, data);
     }
 
     function uploadChunk(
         bytes memory repoName,
         bytes memory path,
-        uint256  chunkId,
+        uint256 chunkId,
         bytes calldata data
     ) external payable {
-        return db.uploadChunk{value:msg.value}(repoName, path,chunkId, data);
+        return db.uploadChunk{value: msg.value}(repoName, path, chunkId, data);
     }
 
     function batchUpload(

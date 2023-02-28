@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 contract Git3NameService {
+    event RegisterHub(string name, address hub);
+
     mapping(string => address) public nameHub;
     mapping(address => string) public hubName;
     mapping(string => address) public nameOwner;
@@ -22,6 +24,7 @@ contract Git3NameService {
         hubName[hub] = name;
         nameOwner[name] = msg.sender;
         nameList.push(name);
+        emit RegisterHub(name, hub);
     }
 
     function nameListLength() public view returns (uint256) {
@@ -34,6 +37,7 @@ contract Git3NameService {
     ) public onlyHubOwner(name) {
         nameHub[name] = hub;
         hubName[hub] = name;
+        emit RegisterHub(name, hub);
     }
 
     function transferNameOwner(
