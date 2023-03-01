@@ -22,17 +22,17 @@ async function main() {
 
   await newHubReceipt.wait();
 
-  let createHubReceipt = await hubFac.createHub({ nonce: nonce });
-  nonce++;
+  // let createHubReceipt = await hubFac.createHub(false, { nonce: nonce });
+  // nonce++;
 
-  await createHubReceipt.wait();
+  // await createHubReceipt.wait();
 
-  let hubAddr = await hubFac.hubs(0);
-  let git3 = await ethers.getContractAt("Hubv3", hubAddr);
+  // let hubAddr = await hubFac.hubs(0);
+  // let git3 = await ethers.getContractAt("Hubv3", hubAddr);
 
   // console.log({logicReceipt,proxyReceipt});
   console.log("HubFactory Contract", hubFac.address);
-  console.log("Hub Contract", git3.address);
+  // console.log("Hub Contract", git3.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
