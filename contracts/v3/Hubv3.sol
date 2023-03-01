@@ -88,12 +88,18 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
         return false;
     }
 
-    function roleToMembers(bytes32 role) public view returns(address[] memory members){
+    function getMembersByRole(bytes32 role) public view returns(address[] memory members){
         uint256 count = getRoleMemberCount(role);
         members = new address[](count);
         for (uint i = 0; i < count; i++){
             members[i] = getRoleMember(role, i);
         }
+    }
+
+    function getAllMembers() public view returns(address[] memory admins,address[] memory managers,address[] memory cons ){
+        admins = getMembersByRole(DEFAULT_ADMIN_ROLE);
+        managers = getMembersByRole(MANAGER);
+        cons = getMembersByRole(CONTRIBUTOR);
     }
 
     function addManager(address member) public {
@@ -120,8 +126,11 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
 
     // ===== repository operator functions======
 
-    function repoList() public view returns(bytes[] memory rn){
-        return repoNames;
+    function repoList() public view returns(string[] memory rn){
+        rn = new string[](repoNames.length);
+        for (uint i = 0; i <repoNames.length;i++){
+            rn[i] = string(repoNames[i]);
+        }
     }
 
     //createRepository can be invoked by anyone within Hub
@@ -178,6 +187,13 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
     function isRepoMembership(
         bytes memory repoName,
         address member
+    ) public view returns (bool) {
+        return _isRepoMembership(repoName,member);
+    }
+
+    function _isRepoMembership(
+        bytes memory repoName,
+        address member
     ) internal view returns (bool) {
         RepositoryInfo storage repo = nameToRepository[repoName];
         if (repo.owner == member) return true;
@@ -219,7 +235,7 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
         bytes memory branchPath,
         bytes20 refHash
     ) external {
-        require(isRepoMembership(repoName, _msgSender()));
+        require(_isRepoMembership(repoName, _msgSender()));
         nameToRepository[repoName].branchs.updateBranch(
             repoName,
             branchPath,
@@ -239,7 +255,7 @@ contract Hubv3 is AccessControlEnumerable, Initializable {
         bytes memory repoName,
         bytes memory branchPath
     ) external {
-        require(isRepoMembership(repoName, _msgSender()));
+        require(_isRepoMembership(repoName, _msgSender()));
         nameToRepository[repoName].branchs.removeBranch(repoName, branchPath);
     }
 
